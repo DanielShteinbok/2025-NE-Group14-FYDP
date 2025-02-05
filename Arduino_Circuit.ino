@@ -3,7 +3,7 @@
 #include "DallasTemperature.h"
 
 // Define the 1-Wire bus pin for temperature sensor:
-#define ONE_WIRE_BUS 2
+#define ONE_WIRE_BUS 5
 
 // Define pins for the HC-SR04 ultrasonic sensor:
 #define TRIG_PIN 3
@@ -18,10 +18,10 @@
 #define TDS_FACTOR 0.5  // TDS factor
 
 // Define pin for the flow sensor:
-#define FLOW_SENSOR_PIN 5  // Flow sensor connected to digital pin 5
+#define FLOW_SENSOR_PIN 2  // Flow sensor connected to digital pin 5
 
 // Define pin for the pump:
-#define PUMP_PIN 7
+#define PUMP_PIN 11
 
 // Default pump duration
 int pumpDuration = 0;
