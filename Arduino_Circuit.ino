@@ -25,6 +25,7 @@
 
 // Default pump duration
 int pumpDuration = 0;
+const int pumpLevel = 100;
 
 // OneWire setup
 OneWire oneWire(ONE_WIRE_BUS);
@@ -50,12 +51,18 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), flowSensorInterrupt, FALLING);
 
   pinMode(PUMP_PIN, OUTPUT);
+  // prime the pump by sending 5V
+  analogWrite(PUMP_PIN, 255);
+  
 
   Serial.println("Time (s) | Temp (C) | Temp (F) | Distance (cm) | TDS (ppm) | Flow Rate (L/min)");
 }
 
 void loop() {
   unsigned long elapsedTime = millis() / 1000;
+
+  // run pump
+  analogWrite(PUMP_PIN, pumpLevel);
 
   // Read temperature sensor
   sensors.requestTemperatures();
@@ -109,13 +116,13 @@ void loop() {
     }
   }
 
-  // Activate pump if needed
-  if (pumpDuration > 0) {
-    digitalWrite(PUMP_PIN, HIGH);
-    delay(pumpDuration);
-    digitalWrite(PUMP_PIN, LOW);
-    pumpDuration = 0; // Reset pump duration after activation
-  }
+  // // Activate pump if needed
+  // if (pumpDuration > 0) {
+  //   digitalWrite(PUMP_PIN, HIGH);
+  //   delay(pumpDuration);
+  //   digitalWrite(PUMP_PIN, LOW);
+  //   pumpDuration = 0; // Reset pump duration after activation
+  // }
 
   delay(1000);
 }
