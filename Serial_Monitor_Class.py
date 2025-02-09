@@ -1,70 +1,93 @@
 import serial
-import pandas as pd
 import time
 
-# Specify the serial port and baud rate
-PORT = 'COM3'  # Replace with your port (e.g., 'COM3', '/dev/ttyUSB0')
-BAUD_RATE = 9600
+class ArduinoDataLogger:
+    def __init__(self, port, baud_rate=9600, timeout=1):
+        """Initialize the Arduino data logger."""
+        self.port = port
+        self.baud_rate = baud_rate
+        self.timeout = timeout
+        self.ser = None
+        self.filename = f"arduino_output_{int(time.time())}.txt"
 
-# Open the serial connection
-ser = serial.Serial(PORT, BAUD_RATE, timeout=1)
-time.sleep(2)  # Allow time for the connection to initialize
+    def connect(self):
+        """Establish a connection to the Arduino."""
+        try:
+            self.ser = serial.Serial(self.port, self.baud_rate, timeout=self.timeout)
+            time.sleep(2)  # Allow time for initialization
+            print(f"Connected to {self.port} at {self.baud_rate} baud.")
+        except serial.SerialException as e:
+            print(f"Failed to connect to {self.port}: {e}")
 
-# List to store data
-data = []
+    def save_to_txt(self, entry):
+        """Append a single data entry to the text file."""
+        with open(self.filename, 'a') as file:
+            file.write("\t".join(map(str, entry)) + "\n")
 
-def save_to_csv(data):
-    """Save the collected data to a CSV file."""
-    # Create a DataFrame from the data
-    df = pd.DataFrame(data, columns=['Time (s)', 'Temperature (C)', 'Temperature (F)', 'Distance (cm)', 'TDS (ppm)', 'Flow Rate (L/min)'])
+    def read_data(self):
+        """Read and log data from the Arduino."""
+        if not self.ser:
+            print("Serial connection not established.")
+            return
+
+        start_time = time.time()
+        print("Reading data from Arduino. Press Ctrl+C to stop.")
+
+        # Write the header to the file only once
+        with open(self.filename, 'w') as file:
+            file.write("Time (s)\tTemperature (C)\tTemperature (F)\tDistance (cm)\tTDS (ppm)\tFlow Rate (L/min)\n")
+
+        try:
+            while True:
+                line = self.ser.readline().decode('utf-8').strip()
+
+                if line:
+                    print(line)
+                    parts = line.split('|')
+
+                    if len(parts) == 6:
+                        elapsed_time = round(time.time() - start_time, 2)
+
+                        try:
+                            temp_c = float(parts[1].strip().split(' ')[0])
+                            temp_f = float(parts[2].strip().split(' ')[0])
+                            distance = float(parts[3].strip().split(' ')[0])
+                            tds = float(parts[4].strip().split(' ')[0])
+                            flow_rate = float(parts[5].strip().split(' ')[0])
+
+                            entry = [elapsed_time, temp_c, temp_f, distance, tds, flow_rate]
+                            
+                            # Save only the latest entry instead of appending all data
+                            self.save_to_txt(entry)
+
+                        except ValueError:
+                            print("Error parsing data. Skipping line.")
+
+        except KeyboardInterrupt:
+            print("\nStopping data collection.")
+
+    def close(self):
+        """Close the serial connection."""
+        if self.ser:
+            self.ser.close()
+            print("Serial connection closed.")
+
+    # Function to send pump duration
+    def send_pump_duration(self, duration):
+        print(f"Sending {duration} ms to Arduino...")
+        self.ser.write(f"{duration}\n".encode())  # Send number as a string
+        time.sleep(0.5)  # Give Arduino time to process
+
+        # Read response from Arduino
+        response = self.ser.readline().decode().strip()
+        if response:
+            print("Arduino:", response)
+
+# Usage example:
+if __name__ == "__main__":
+    logger = ArduinoDataLogger(port='COM3', baud_rate=9600)
     
-    # Save the DataFrame to a CSV file
-    filename = f"arduino_output_{int(time.time())}.csv"
-    df.to_csv(filename, index=False)
-    print(f"Data saved to {filename}")
-
-try:
-    print("Reading data from Arduino. Type 'SAVE' in the console to save to CSV.")
-    start_time = time.time()
-
-    while True:
-        # Read a line from the serial monitor
-        line = ser.readline().decode('utf-8').strip()
-
-        if line:
-            print(line)
-
-            # Parse the line into components (assuming '|' as the delimiter in Arduino output)
-            parts = line.split('|')
-            
-            # Check if data has the expected number of parts
-            if len(parts) == 6:
-                elapsed_time = round(time.time() - start_time, 2)
-
-                # Parse and store the data
-                try:
-                    temp_c = float(parts[1].strip().split(' ')[0])
-                    temp_f = float(parts[2].strip().split(' ')[0])
-                    distance = float(parts[3].strip().split(' ')[0])
-                    tds = float(parts[4].strip().split(' ')[0])
-                    flow_rate = float(parts[5].strip().split(' ')[0])
-
-                    # Append to data list
-                    data.append([elapsed_time, temp_c, temp_f, distance, tds, flow_rate])
-                except ValueError:
-                    print("Error parsing data. Skipping line.")
-
-        # Check for user input
+    logger.connect()
     
-
-except KeyboardInterrupt:
-    print("\nExiting...")
-    ser.close()
+    logger.read_data()
     
-    # Prompt to save data if any exists
-    if data:
-        save_to_csv(data)
-    else:
-        print("No data to save.")
-
-ser.close()
