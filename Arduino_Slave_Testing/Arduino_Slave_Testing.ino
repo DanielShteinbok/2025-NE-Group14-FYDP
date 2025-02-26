@@ -24,6 +24,7 @@
 #define PUMP_PIN 5
 
 // Define the loop time
+#define LOOP_TIME 100
 
 // Default pump duration
 // int pumpDuration = 0;
@@ -66,7 +67,7 @@ void setup() {
 
 void loop() {
   unsigned long elapsedTime = millis();
-  if(elapsedTime >= (cloopTime + 1000))
+  if(elapsedTime >= (cloopTime + LOOP_TIME))
   {
 
     // write to the pump
