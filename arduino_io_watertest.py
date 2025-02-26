@@ -14,7 +14,7 @@ ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
 # Ensure serial connection stabilizes
 time.sleep(2)
-
+runtime = 0
 
 CSV_FILENAME = input("Enter the CSV filename to log data: ").strip()
 if not CSV_FILENAME.endswith(".csv"):
@@ -31,6 +31,7 @@ lock = threading.Lock()
 
 def read_serial():
     """ Continuously read from serial, log data to CSV, and display it. """
+    global runtime
     try:
         while True:
             if ser.in_waiting > 0:
@@ -58,21 +59,25 @@ def read_serial():
 
 def write_serial():
     """ Continuously wait for user input and send it to the Arduino. """
+    global runtime
     try:
         pumping = False
         while True:
-            command = input("Enter command to send (or type 'exit' to quit): ").strip()
+            command = input("Enter command to send (or type 'exit' to quit, or 'time' for time): ").strip()
             if command.lower() == "exit":
                 print("Exiting program...")
                 ser.close()
                 break
             with lock:
-                # ser.write((command + "\n").encode("utf-8"))  # Send command over serial
-                # print(f"[Sent] {command}")
-                to_send = "STOP PUMPING" if pumping else "START PUMPING"
-                pumping = not pumping
-                ser.write((to_send + "\n").encode("utf-8"))  # Send command over serial
-                print(f"[Sent] {to_send}")
+                if command.lower() == "time":
+                    print("runtime: ", runtime) 
+                else:
+                    # ser.write((command + "\n").encode("utf-8"))  # Send command over serial
+                    # print(f"[Sent] {command}")
+                    to_send = "STOP PUMPING" if pumping else "START PUMPING"
+                    pumping = not pumping
+                    ser.write((to_send + "\n").encode("utf-8"))  # Send command over serial
+                    print(f"[Sent] {to_send}")
 
     except KeyboardInterrupt:
         print("Stopping user input thread.")
