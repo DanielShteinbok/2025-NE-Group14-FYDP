@@ -1,32 +1,25 @@
-from picamera2 import Picamera2
-from time import sleep
+import subprocess
 from datetime import datetime
-from PIL import Image
 
-# Initialize the camera
-picam2 = Picamera2()
+class CameraCapture:
+    def __init__(self):
+        """Initialize the class."""
+        self.command_template = "libcamera-still -n -o /home/fydp-group-14/{}.jpg"
+    
+    def capture_photo(self):
+        """Generate a filename based on the current date and time, then execute the libcamera command."""
+        # Get the current date and time formatted as yyyy-mm-dd_HH-MM-SS
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = self.command_template.format(timestamp)  # Replace placeholder with timestamp
 
-# Configure the camera for still image capture
-picam2.configure(picam2.create_still_configuration())
+        # Execute the command using subprocess
+        try:
+            subprocess.run(filename, shell=True, check=True)
+            print(f"Photo saved as /home/fydp-group-14/{timestamp}.jpg")
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred: {e}")
 
-# Start the camera preview (optional, useful for testing)
-picam2.start_preview()
-
-# Wait for a moment to allow the camera to adjust
-sleep(2)
-
-# Capture the photo
-image = picam2.capture_array()
-
-# Get the current time and date as a string
-timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-# Save the image with the timestamp as the filename
-im = Image.fromarray(image)
-filename = f"{timestamp}.jpg"
-im.save(filename)
-
-# Stop the preview (optional)
-picam2.stop_preview()
-
-print(f"Photo saved as {filename}")
+# Example usage
+if __name__ == "__main__":
+    camera = CameraCapture()
+    camera.capture_photo()
