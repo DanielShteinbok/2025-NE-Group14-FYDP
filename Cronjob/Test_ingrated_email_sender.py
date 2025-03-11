@@ -1,10 +1,16 @@
 from Emails.Emailer import EmailSender  # Importing the class from email_sender.py
-from Photo_ import JPGFileFinder
+
+from Photo_Taker import CameraCaptureAndFileFinder
 
 
 
-finder = JPGFileFinder()
-photos = finder.find_jpg_files()
+captures = CameraCaptureAndFileFinder()
+
+captures.find_jpg_files()
+captures.sort_jpg_files_by_datetime(output=False)
+captures.capture_photo()
+photos =captures.jpg_files
+
 
 if photos:
     print(photos)
