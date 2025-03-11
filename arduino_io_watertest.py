@@ -77,13 +77,21 @@ def write_serial():
                     print("runtime: ", runtime) 
                 elif command.lower() == "status":
                     print(status)
-                else:
+                # else:
+                elif command.lower() == "p" or command.lower() == "pump":
                     # ser.write((command + "\n").encode("utf-8"))  # Send command over serial
                     # print(f"[Sent] {command}")
                     to_send = "STOP PUMPING" if pumping else "START PUMPING"
                     pumping = not pumping
                     ser.write((to_send + "\n").encode("utf-8"))  # Send command over serial
                     print(f"[Sent] {to_send}")
+                # elif command.lower() == "h" or command.lower() == "heat":
+                elif command.split(" ")[0].lower() == "heat":
+                    to_send = "HEAT "+ command.split()[1]
+                    # ser.write((command + "\n").encode("utf-8"))
+                    ser.write((to_send + "\n").encode("utf-8"))  # Send command over serial
+                else:
+                    ser.write(("STOP HEATING" + "\n").encode("utf-8"))
 
     except KeyboardInterrupt:
         print("Stopping user input thread.")
