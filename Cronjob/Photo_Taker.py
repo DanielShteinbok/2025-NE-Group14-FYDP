@@ -10,15 +10,21 @@ class CameraCaptureAndFileFinder:
         self.jpg_files = self.find_jpg_files()
 
     def capture_photo(self):
-        """Generate a filename based on the current date and time, then execute the libcamera command."""
+        """Generate a filename based on the current date, time, and total number of photos + 1, then execute the libcamera command."""
         # Get the current date and time formatted as yyyy-mm-dd_HH-MM-SS
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = self.command_template.format(self.directory, timestamp)  # Replace placeholder with timestamp
+        
+        # Count the number of JPG files in the directory
+        total_photos = len(self.jpg_files)
+        
+        # Create the filename with timestamp and total_photos + 1
+        filename = f"{timestamp}_photo{total_photos + 1}"
+        full_command = self.command_template.format(self.directory, filename)  # Replace placeholder with filename
 
         # Execute the command using subprocess
         try:
-            subprocess.run(filename, shell=True, check=True)
-            print(f"Photo saved as {self.directory}{timestamp}.jpg")
+            subprocess.run(full_command, shell=True, check=True)
+            print(f"Photo saved as {self.directory}{filename}.jpg")
             
             # After capturing the photo, refresh the list of JPG files
             self.jpg_files = self.find_jpg_files()  # Add the new photo to the list immediately
@@ -38,13 +44,13 @@ class CameraCaptureAndFileFinder:
         else:
             print("No JPG files found.")
 
-    def sort_jpg_files_by_datetime(self, output=True):
-        """Sorts the JPG files by their timestamp in the filename (ascending order)."""
-        # Sort the files based on the timestamp part of the filename (before .jpg)
-        self.jpg_files.sort(key=lambda x: datetime.strptime(x.split('.')[0], "%Y-%m-%d_%H-%M-%S"))
+    def sort_jpg_files_by_number(self, output=True):
+        """Sorts the JPG files by the number at the end of the filename (ascending order)."""
+        # Sort the files based on the number at the end of the filename
+        self.jpg_files.sort(key=lambda x: int(x.split('_photo')[1].split('.')[0]))
         
         if output:
-            print("Sorted JPG files by date and time:")
+            print("Sorted JPG files by number:")
             for file in self.jpg_files:
                 print(file)
 
@@ -58,5 +64,5 @@ if __name__ == "__main__":
     # Display and sort JPG files
     camera_and_finder.display_jpg_files()
 
-    # Sort the files by date and time
-    camera_and_finder.sort_jpg_files_by_datetime()
+    # Sort the files by number at the end of the filename
+    camera_and_finder.sort_jpg_files_by_number()

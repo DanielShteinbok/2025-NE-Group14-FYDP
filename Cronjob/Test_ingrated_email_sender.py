@@ -1,26 +1,26 @@
-from Emails.Emailer import EmailSender  # Importing the class from email_sender.py
 
+from Chatgpt import PlantDiseaseAnalyzer
 from Photo_Taker import CameraCaptureAndFileFinder
 
 
 
 captures = CameraCaptureAndFileFinder()
 
+#Finds all the photos 
 captures.find_jpg_files()
-captures.sort_jpg_files_by_datetime(output=False)
+#Captures Photos
 captures.capture_photo()
+#Updates List
 photos =captures.jpg_files
 
 
 if photos:
     print(photos)
-    # Create an instance of EmailSender
-    email_sender = EmailSender()
+    #Use the most recent photo
+    focus = photos[0]
+    
 
-    # Define email details
-    receiver = "timothymanuel295@gmail.com"
-    subject = "Test Email"
-    body = "Hello, this is a test email sent using Python!"
-
-    # Send the email
-    email_sender.send_email(receiver, subject, body)
+    #Run Analysis
+    analyzer = PlantDiseaseAnalyzer(image_filename=focus, receiver_email = "timothymanuel295@gmail.com", email_subject="Lettuce Status")
+    analyzer.run_analysis()
+    
