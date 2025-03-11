@@ -15,6 +15,7 @@ ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 # Ensure serial connection stabilizes
 time.sleep(2)
 runtime = 0
+status = ""
 
 CSV_FILENAME = input("Enter the CSV filename to log data: ").strip()
 if not CSV_FILENAME.endswith(".csv"):
@@ -32,6 +33,7 @@ lock = threading.Lock()
 def read_serial():
     """ Continuously read from serial, log data to CSV, and display it. """
     global runtime
+    global status
     try:
         while True:
             if ser.in_waiting > 0:
@@ -49,6 +51,7 @@ def read_serial():
                         with lock, open(CSV_FILENAME, "a", newline="") as file:
                             writer = csv.writer(file)
                             writer.writerow([last_zeroed, runtime, flow_counts, distance])
+                            status = f"[Arduino] {runtime}, {flow_counts}, {distance}"
 
                         # print(f"[Arduino] {runtime}, {flow_counts}, {distance}")
                     except ValueError:
@@ -60,6 +63,7 @@ def read_serial():
 def write_serial():
     """ Continuously wait for user input and send it to the Arduino. """
     global runtime
+    global status
     try:
         pumping = False
         while True:
@@ -71,6 +75,8 @@ def write_serial():
             with lock:
                 if command.lower() == "time":
                     print("runtime: ", runtime) 
+                elif command.lower() == "status":
+                    print(status)
                 else:
                     # ser.write((command + "\n").encode("utf-8"))  # Send command over serial
                     # print(f"[Sent] {command}")
