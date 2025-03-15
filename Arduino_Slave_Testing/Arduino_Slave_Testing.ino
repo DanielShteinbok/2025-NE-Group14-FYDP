@@ -23,6 +23,9 @@
 // Define pin for the pump:
 #define PUMP_PIN 5
 
+// pin for peltier
+#define PELTIER_HOT 10
+
 // Define the loop time
 #define LOOP_TIME 100
 
@@ -161,6 +164,14 @@ void loop() {
         } else if (command == "STOP PUMPING") {
             digitalWrite(PUMP_PIN, LOW); // Turn pump off
             // Serial.println("Pump stopped");
+        } else if (command.startsWith("HEAT")) {
+          String valueStr = command.substring(command.indexOf(" "));
+          valueStr.trim();
+          analogWrite(PELTIER_HOT, valueStr.toInt());
+        // } else if (command == "HEAT") {
+        //   analogWrite(PELTIER_HOT, 255);
+        } else if (command == "STOP HEATING") {
+          analogWrite(PELTIER_HOT, 0);
         }
     }
     cloopTime = millis();
