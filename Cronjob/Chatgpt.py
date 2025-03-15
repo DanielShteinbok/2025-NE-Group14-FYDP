@@ -60,6 +60,8 @@ class PlantDiseaseAnalyzer:
         try:
             response_content = eval(response)  # Convert response to dictionary
             score = float(response_content.get("score", -1))
+                
+            
 
             if 0.5 <= score <= 1:
                 # Format the email body
@@ -72,6 +74,7 @@ class PlantDiseaseAnalyzer:
 
                 for recommendation in response_content['recommendations']:
                     email_body += f"- {recommendation}\n"
+                
 
                 return email_body
             else:
