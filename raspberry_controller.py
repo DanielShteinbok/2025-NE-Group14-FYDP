@@ -145,7 +145,7 @@ def read_serial():
                         os.replace("variables_lock.sh", "variables.sh")
 
                         # Save state
-                        save_state(x, P)
+                        save_state(x.tolist(), P.tolist())
 
                         status = f"volume: {x[0]}, flowrate: {x[1]}, tds: {tdsvalue}, temperature: {temperature}"
                         print(status)
