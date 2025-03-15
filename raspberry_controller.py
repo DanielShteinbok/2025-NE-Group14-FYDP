@@ -99,9 +99,14 @@ concentrate_concentration = float(os.getenv('CONCENTRATE_CONCENTRATION', '1169.4
 optimal_volume = float(os.getenv('OPTIMAL_VOLUME', '3.8'))
 volume_delta_for_dispense = float(os.getenv('VOLUME_DELTA_FOR_DISPENSE', '0.2'))
 optimal_temperature = float(os.getenv('OPTIMAL_TEMPERATURE', '21.0'))
+enable_heating = os.getenv('ENABLE_HEATING', 'False') == 'True'
 
 # write optimal temperature to Arduino
 ser.write(f"TEMP_SETPOINT_C {optimal_temperature}\n".encode("utf-8"))
+if enable_heating:
+    ser.write(f"ENABLE HEATING\n".encode("utf-8"))
+else:
+    ser.write(f"STOP HEATING\n".encode("utf-8"))
 # Lock for thread safety
 lock = threading.Lock()
 

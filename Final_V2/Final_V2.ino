@@ -86,6 +86,8 @@ double Setpoint, Input, Output;
 double Kp = 2.0, Ki = 5.0, Kd = 1.0; // Tune these values
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
+bool enableHeating = false;
+
 void iterateKalman(float z[2], float x[2], float P[2][2], float w, float Q_diag[2], float R_diag[2], float dt) {
   // note that the Q and R are just diagonal because we assume no process or measurement noise covariance
   // w is just the rate of evaporation
@@ -299,6 +301,10 @@ void loop() {
     //   analogWrite(PELTIER_HOT, 255);
     } else if (command == "STOP HEATING") {
       analogWrite(PELTIER_HOT_PIN, 0);
+      analogWrite(PELTIER_COLD_PIN, 0);
+      enableHeating = false;
+    } else if (command == "ENABLE HEATING") {
+      enableHeating = true;
     } else if (command.startsWith("TEMP_SETPOINT_C")) {
       String valueStr = command.substring(command.indexOf(" "));
       valueStr.trim();
@@ -325,13 +331,17 @@ void loop() {
   myPID.Compute();
 
   // Control Heating and Cooling with a Dead Zone
-  if (Output > 10) {  // Heating needed
-      analogWrite(PELTIER_HOT_PIN, Output);
+  if (Output > 10 && enableHeating) {  // Heating needed
+      analogWrite(PELTIER_HOT_PIN, int(trunc(Output)));
       analogWrite(PELTIER_COLD_PIN, 0);
+      Serial.print("HOT PELTIER SET TO ");
+      Serial.println(int(trunc(Output)));
   } 
-  else if (Output < -10) {  // Cooling needed
+  else if (Output < -10 && enableHeating) {  // Cooling needed
       analogWrite(PELTIER_HOT_PIN, 0);
-      analogWrite(PELTIER_COLD_PIN, abs(Output));
+      analogWrite(PELTIER_COLD_PIN, int(trunc(abs(Output))));
+      Serial.print("COLD PELTIER SET TO ");
+      Serial.println(int(trunc(abs(Output))));
   } 
   else { // Dead zone to prevent oscillation
       analogWrite(PELTIER_HOT_PIN, 0);
