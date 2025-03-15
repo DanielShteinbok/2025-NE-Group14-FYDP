@@ -351,7 +351,7 @@ void loop() {
   Serial.print(", ");
   Serial.print(pulses2);
   Serial.print(", ");
-  Serial.println(distance);
+  Serial.print(distance);
   Serial.print(", ");
   Serial.print(tempC);
   Serial.print(", ");

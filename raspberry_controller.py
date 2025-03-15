@@ -108,7 +108,7 @@ def read_serial():
                 line = ser.readline().decode("utf-8").strip()
                 data = line.split(",")
 
-                if len(data) == 4:
+                if len(data) == 6:
                     try:
                         dt = int(data[0].strip())
                         flowcount1 = int(data[1].strip())
@@ -116,6 +116,8 @@ def read_serial():
                         distance = float(data[3].strip())
                         temperature = float(data[4].strip())
                         tdsvalue = float(data[5].strip())
+
+                        print(f"dt: {dt}, flowcount1: {flowcount1}, flowcount2: {flowcount2}, distance: {distance}, temperature: {temperature}, tdsvalue: {tdsvalue}")
 
                         # Kalman update
                         z = np.array([-0.787714755*distance + 9.955578414, (flowcount1 + flowcount2)*5.35391e-5/dt])
