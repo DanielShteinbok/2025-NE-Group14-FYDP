@@ -57,8 +57,8 @@ def kalman_update(x, P, z, dt, w, Q, R):
     return x, P
 
 # Configure the serial connection (change the port accordingly)
-# SERIAL_PORT = "/dev/ttyUSB0"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
-SERIAL_PORT = "COM3"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
+SERIAL_PORT = "/dev/ttyUSB0"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
+# SERIAL_PORT = "COM3"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
 BAUD_RATE = 9600
 # CSV_FILENAME = "arduino_data.csv"
 
