@@ -102,6 +102,8 @@ def read_serial():
     """ Continuously read from serial, log data to CSV, and display it. """
     global runtime
     global status
+    global x
+    global P
     try:
         while True:
             if ser.in_waiting > 0:
