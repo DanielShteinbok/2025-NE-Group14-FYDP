@@ -94,9 +94,22 @@ R = os.getenv('R', '0,0').split(',')
 R = [float(i) for i in R]
 # R = np.diag([float(i) for i in R])
 w = float(os.getenv('W', '0'))
+optimal_tds = float(os.getenv('OPTIMAL_TDS', '584.72'))
+concentrate_concentration = float(os.getenv('CONCENTRATE_CONCENTRATION', '1169.43'))
+optimal_volume = float(os.getenv('OPTIMAL_VOLUME', '3.8'))
+volume_delta_for_dispense = float(os.getenv('VOLUME_DELTA_FOR_DISPENSE', '0.2'))
+optimal_temperature = float(os.getenv('OPTIMAL_TEMPERATURE', '21.0'))
 
+# write optimal temperature to Arduino
+ser.write(f"TEMP_SETPOINT_C {optimal_temperature}\n".encode("utf-8"))
 # Lock for thread safety
 lock = threading.Lock()
+
+def calculate_dispense(measured_volume, target_volume, measured_concentration, target_concentration, concentrate_concentration):
+    # return (target_volume * target_concentration - measured_volume * measured_concentration) / target_concentration
+    dispense_nutrients = (target_concentration*target_volume - measured_concentration*measured_volume) / concentrate_concentration
+    dispense_water = target_volume - measured_volume - dispense_nutrients
+    return dispense_water, dispense_nutrients
 
 def read_serial():
     """ Continuously read from serial, log data to CSV, and display it. """
@@ -151,6 +164,14 @@ def read_serial():
                         # print(status)
 
                         # print(f"[Arduino] {runtime}, {flow_counts}, {distance}")
+                        if optimal_volume - x[0] > volume_delta_for_dispense and flowcount1 + flowcount2 == 0:
+                            dispense_water, dispense_nutrients = calculate_dispense(x[0], optimal_volume, tdsvalue, optimal_tds, concentrate_concentration)
+                            print(f"Dispense {dispense_water}L of water and {dispense_nutrients}L of nutrients")
+                            ser.write(f"PUMP_WATER {dispense_water}\n".encode("utf-8"))
+                            ser.write(f"PUMP_NUTRIENTS {dispense_nutrients}\n".encode("utf-8"))
+                        
+
+
                     except ValueError:
                         print(f"[Warning] Skipping invalid data: {line}")
 
