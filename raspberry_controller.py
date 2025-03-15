@@ -120,7 +120,7 @@ def read_serial():
                         # Kalman update
                         z = np.array([-0.787714755*distance + 9.955578414, (flowcount1 + flowcount2)*5.35391e-5/dt])
                         Q_here = Q if (flowcount1 + flowcount2) > 0 else [Q[0], 0]
-                        x, P = kalman_update(x, P, z, dt, w, np.diag(Q), np.diag(R))
+                        x, P = kalman_update(x, P, z, dt, w, Q_here, np.diag(R))
 
                         # Append to CSV safely
                         # with lock, open(CSV_FILENAME, "a", newline="") as file:
