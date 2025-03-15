@@ -110,7 +110,7 @@ def read_serial():
 
                 if len(data) == 6:
                     try:
-                        dt = int(data[0].strip())
+                        dt = float(data[0].strip())
                         flowcount1 = int(data[1].strip())
                         flowcount2 = int(data[2].strip())
                         distance = float(data[3].strip())
