@@ -89,8 +89,10 @@ import os
 x, P = load_state()
 Q = os.getenv('Q', '0,0').split(',')
 Q = [float(i) for i in Q]
+# Q = np.diag([float(i) for i in Q])
 R = os.getenv('R', '0,0').split(',')
 R = [float(i) for i in R]
+# R = np.diag([float(i) for i in R])
 w = float(os.getenv('W', '0'))
 
 # Lock for thread safety
@@ -117,6 +119,7 @@ def read_serial():
 
                         # Kalman update
                         z = np.array([-0.787714755*distance + 9.955578414, (flowcount1 + flowcount2)*5.35391e-5/dt])
+                        Q_here = Q if (flowcount1 + flowcount2) > 0 else [Q[0], 0]
                         x, P = kalman_update(x, P, z, dt, w, np.diag(Q), np.diag(R))
 
                         # Append to CSV safely
