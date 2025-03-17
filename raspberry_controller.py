@@ -57,8 +57,8 @@ def kalman_update(x, P, z, dt, w, Q, R):
     return x, P
 
 # Configure the serial connection (change the port accordingly)
-# SERIAL_PORT = "/dev/ttyUSB0"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
-SERIAL_PORT = "COM3"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
+SERIAL_PORT = "/dev/ttyACM0"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
+# SERIAL_PORT = "COM3"  # Adjust for your system (e.g., "COM3" on Windows, "/dev/ttyUSB0" or "/dev/ttyACM0" on Linux)
 BAUD_RATE = 9600
 # CSV_FILENAME = "arduino_data.csv"
 
@@ -89,35 +89,60 @@ import os
 x, P = load_state()
 Q = os.getenv('Q', '0,0').split(',')
 Q = [float(i) for i in Q]
+# Q = np.diag([float(i) for i in Q])
 R = os.getenv('R', '0,0').split(',')
 R = [float(i) for i in R]
+# R = np.diag([float(i) for i in R])
 w = float(os.getenv('W', '0'))
+optimal_tds = float(os.getenv('OPTIMAL_TDS', '584.72'))
+concentrate_concentration = float(os.getenv('CONCENTRATE_CONCENTRATION', '1169.43'))
+optimal_volume = float(os.getenv('OPTIMAL_VOLUME', '3.8'))
+volume_delta_for_dispense = float(os.getenv('VOLUME_DELTA_FOR_DISPENSE', '0.2'))
+optimal_temperature = float(os.getenv('OPTIMAL_TEMPERATURE', '21.0'))
+enable_heating = os.getenv('ENABLE_HEATING', 'False') == 'True'
 
+# write optimal temperature to Arduino
+ser.write(f"TEMP_SETPOINT_C {optimal_temperature}\n".encode("utf-8"))
+if enable_heating:
+    ser.write(f"ENABLE HEATING\n".encode("utf-8"))
+else:
+    ser.write(f"STOP HEATING\n".encode("utf-8"))
 # Lock for thread safety
 lock = threading.Lock()
+
+def calculate_dispense(measured_volume, target_volume, measured_concentration, target_concentration, concentrate_concentration):
+    # return (target_volume * target_concentration - measured_volume * measured_concentration) / target_concentration
+    dispense_nutrients = (target_concentration*target_volume - measured_concentration*measured_volume) / concentrate_concentration
+    dispense_water = target_volume - measured_volume - dispense_nutrients
+    return dispense_water, dispense_nutrients
 
 def read_serial():
     """ Continuously read from serial, log data to CSV, and display it. """
     global runtime
     global status
+    global x
+    global P
     try:
         while True:
             if ser.in_waiting > 0:
                 line = ser.readline().decode("utf-8").strip()
                 data = line.split(",")
 
-                if len(data) == 4:
+                if len(data) == 6:
                     try:
-                        dt = int(data[0].strip())
+                        dt = float(data[0].strip())
                         flowcount1 = int(data[1].strip())
                         flowcount2 = int(data[2].strip())
                         distance = float(data[3].strip())
                         temperature = float(data[4].strip())
                         tdsvalue = float(data[5].strip())
 
+                        # print(f"dt: {dt}, flowcount1: {flowcount1}, flowcount2: {flowcount2}, distance: {distance}, temperature: {temperature}, tdsvalue: {tdsvalue}")
+
                         # Kalman update
                         z = np.array([-0.787714755*distance + 9.955578414, (flowcount1 + flowcount2)*5.35391e-5/dt])
-                        x, P = kalman_update(x, P, z, dt, w, np.diag(Q), np.diag(R))
+                        Q_here = Q if (flowcount1 + flowcount2) > 0 else [Q[0], 0]
+                        x, P = kalman_update(x, P, z, dt, w, np.diag(Q_here), np.diag(R))
 
                         # Append to CSV safely
                         # with lock, open(CSV_FILENAME, "a", newline="") as file:
@@ -138,11 +163,20 @@ def read_serial():
                         os.replace("variables_lock.sh", "variables.sh")
 
                         # Save state
-                        save_state(x, P)
+                        save_state(x.tolist(), P.tolist())
 
                         status = f"volume: {x[0]}, flowrate: {x[1]}, tds: {tdsvalue}, temperature: {temperature}"
+                        # print(status)
 
                         # print(f"[Arduino] {runtime}, {flow_counts}, {distance}")
+                        if optimal_volume - x[0] > volume_delta_for_dispense and flowcount1 + flowcount2 == 0:
+                            dispense_water, dispense_nutrients = calculate_dispense(x[0], optimal_volume, tdsvalue, optimal_tds, concentrate_concentration)
+                            print(f"Dispense {dispense_water}L of water and {dispense_nutrients}L of nutrients")
+                            ser.write(f"PUMP_WATER {dispense_water}\n".encode("utf-8"))
+                            ser.write(f"PUMP_NUTRIENTS {dispense_nutrients}\n".encode("utf-8"))
+                        
+
+
                     except ValueError:
                         print(f"[Warning] Skipping invalid data: {line}")
 
