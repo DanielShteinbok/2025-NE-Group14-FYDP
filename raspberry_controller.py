@@ -166,7 +166,7 @@ def read_serial():
                         # Save state
                         save_state(x.tolist(), P.tolist())
 
-                        status = f"volume: {x[0]}, flowrate: {x[1]}, tds: {tdsvalue}, temperature: {temperature}"
+                        status = f"volume: {x[0]}, flowrate: {x[1]}, tds: {tdsvalue}, temperature: {temperature}, ultrasonic distance: {distance}"
                         # print(status)
 
                         # print(f"[Arduino] {runtime}, {flow_counts}, {distance}")
