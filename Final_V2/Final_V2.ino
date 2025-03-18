@@ -83,7 +83,8 @@ int pulsesThisCycle[2] = {0,0};
 // define the PID controller
 // PID Parameters
 double Setpoint, Input, Output;
-double Kp = 2.0, Ki = 5.0, Kd = 1.0; // Tune these values
+// double Kp = 2.0, Ki = 5.0, Kd = 1.0; // Tune these values
+double Kp = 10.0, Ki = 1.0, Kd = 1.0; // Tune these values
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 bool enableHeating = false;
