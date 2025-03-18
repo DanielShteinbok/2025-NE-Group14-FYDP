@@ -100,6 +100,7 @@ optimal_volume = float(os.getenv('OPTIMAL_VOLUME', '3.8'))
 volume_delta_for_dispense = float(os.getenv('VOLUME_DELTA_FOR_DISPENSE', '0.2'))
 optimal_temperature = float(os.getenv('OPTIMAL_TEMPERATURE', '21.0'))
 enable_heating = os.getenv('ENABLE_HEATING', 'False') == 'True'
+enable_pumping = os.getenv('ENABLE_PUMPING', 'False') == 'True'
 
 # write optimal temperature to Arduino
 ser.write(f"TEMP_SETPOINT_C {optimal_temperature}\n".encode("utf-8"))
@@ -172,8 +173,11 @@ def read_serial():
                         if optimal_volume - x[0] > volume_delta_for_dispense and flowcount1 + flowcount2 == 0:
                             dispense_water, dispense_nutrients = calculate_dispense(x[0], optimal_volume, tdsvalue, optimal_tds, concentrate_concentration)
                             print(f"Dispense {dispense_water}L of water and {dispense_nutrients}L of nutrients")
-                            ser.write(f"PUMP_WATER {dispense_water}\n".encode("utf-8"))
-                            ser.write(f"PUMP_NUTRIENTS {dispense_nutrients}\n".encode("utf-8"))
+                            if enable_pumping:
+                                ser.write(f"PUMP_WATER {dispense_water}\n".encode("utf-8"))
+                                ser.write(f"PUMP_NUTRIENTS {dispense_nutrients}\n".encode("utf-8"))
+                            else:
+                                print("Pumping is disabled")
                         
 
 
